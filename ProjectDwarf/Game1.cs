@@ -5,6 +5,7 @@ using ProjectDwarf.Managers;
 using ProjectDwarf.Screens;
 using ProjectDwarf.Utils;
 using ProjectDwarf.UI;
+using System.Runtime.CompilerServices;
 
 namespace ProjectDwarf
 {
@@ -12,6 +13,12 @@ namespace ProjectDwarf
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+
+        public static ColonyScreen ColonyScreen;
+        public static MainMenu MainMenu;
+        public static OptionsScreen OptionsScreen;
+
+        public static bool shouldQuit = false;
 
         public Game1()
         {
@@ -57,11 +64,13 @@ namespace ProjectDwarf
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            AssetManager.Instance.LoadTexture("tileset");
-
             UIText.Initialize(_spriteBatch);
 
-            ScreenManager.Instance.ChangeScreen(new ColonyScreen(_spriteBatch));
+            ColonyScreen = new ColonyScreen(_spriteBatch);
+            MainMenu = new MainMenu(_spriteBatch);
+            OptionsScreen = new OptionsScreen(_spriteBatch);
+
+            ScreenManager.Instance.ChangeScreen(MainMenu);
         }
 
         protected override void Update(GameTime gameTime)
@@ -69,6 +78,9 @@ namespace ProjectDwarf
             ScreenManager.Instance.CurrentScreen.Update(gameTime);
 
             base.Update(gameTime);
+
+            if (shouldQuit)
+                Exit();
         }
 
         protected override void Draw(GameTime gameTime)

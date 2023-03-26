@@ -44,3 +44,10 @@
 /processorParam:TextureFormat=Color
 /build:tileset.png
 
+#begin titlefont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:titlefont.spritefont
+

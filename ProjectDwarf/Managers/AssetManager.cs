@@ -14,6 +14,7 @@ namespace ProjectDwarf.Managers
         private static Dictionary<string, Texture2D> textures;
 
         private static SpriteFont font;
+        private static SpriteFont titleFont;
 
         private ContentManager contentManager;
 
@@ -43,9 +44,10 @@ namespace ProjectDwarf.Managers
             textures[textureName] = contentManager.Load<Texture2D>(textureName);
         }
 
-        public void LoadFont()
+        public void LoadFonts()
         {
             font = contentManager.Load<SpriteFont>("font");
+            titleFont = contentManager.Load<SpriteFont>("titlefont");
         }
 
         public void LoadTextures(string[] textureNames)
@@ -54,9 +56,14 @@ namespace ProjectDwarf.Managers
                 textures[textureName] = contentManager.Load<Texture2D>(textureName);
         }
 
-        public SpriteFont GetFont()
+        public SpriteFont GetRegularFont()
         {
             return font;
+        }
+
+        public SpriteFont GetTitleFont()
+        {
+            return titleFont;
         }
 
         public Texture2D GetTexture(string textureName)

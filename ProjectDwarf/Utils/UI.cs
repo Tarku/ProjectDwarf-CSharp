@@ -25,6 +25,7 @@ namespace ProjectDwarf.UI
     {
         private static SpriteBatch _spriteBatch;
         private static SpriteFont _font;
+        private static SpriteFont _titleFont;
 
         private static Texture2D _textBackground;
 
@@ -32,19 +33,27 @@ namespace ProjectDwarf.UI
         {
             _spriteBatch = spriteBatch;
 
-            AssetManager.Instance.LoadFont();
+            AssetManager.Instance.LoadFonts();
+
+            _font = AssetManager.Instance.GetRegularFont();
+            _titleFont = AssetManager.Instance.GetTitleFont();
+
             AssetManager.Instance.LoadTexture("text_background");
 
-            _font = AssetManager.Instance.GetFont();
             _textBackground = AssetManager.Instance.GetTexture("text_background");
 
             Console.WriteLine("UIText initialized.");
         }
 
-        public static void Display(string text, Color color, Vector2 position, UIAnchor anchor = UIAnchor.Left, bool hasBackground = true)
+        public static void Display(string text, Color color, Vector2 position, UIAnchor anchor = UIAnchor.Left, bool hasBackground = true, bool isTitle = false)
         {
             Vector2 blitPosition = new();
-            Vector2 tSize = _font.MeasureString(text) + Constants.UIPadding ;
+            Vector2 tSize;
+
+            if (isTitle)
+                tSize = _titleFont.MeasureString(text) + Constants.UIPadding;
+            else
+                tSize = _font.MeasureString(text) + Constants.UIPadding;
 
             switch (anchor)
             {
@@ -111,7 +120,10 @@ namespace ProjectDwarf.UI
             if (hasBackground)
                 _spriteBatch.Draw(_textBackground, tRectangle, Color.White);
 
-            _spriteBatch.DrawString(_font, text, blitPosition, color);
+            if (isTitle)
+                _spriteBatch.DrawString(_titleFont, text, blitPosition, color);
+            else
+                _spriteBatch.DrawString(_font, text, blitPosition, color);
         }
     }
 }

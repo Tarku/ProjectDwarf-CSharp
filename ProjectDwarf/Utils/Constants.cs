@@ -9,6 +9,8 @@ namespace ProjectDwarf
 {
     public static class Constants
     {
+        public static string Version = "alpha 1.0.0";
+
         public static int ScreenWidth = 1440;
         public static int ScreenHeight = 720;
 

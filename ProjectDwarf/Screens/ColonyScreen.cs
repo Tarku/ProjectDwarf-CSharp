@@ -13,12 +13,12 @@ using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using ProjectDwarf.Tiles;
 
 namespace ProjectDwarf.Screens
 {
     public class ColonyScreen : BaseScreen
     {
-        SpriteFont font;
         int currentLevel = Constants.SurfaceLevel;
 
         Rectangle mouseSelection = new Rectangle();
@@ -52,11 +52,9 @@ namespace ProjectDwarf.Screens
 
         public override void LoadContent()
         {
-            AssetManager.Instance.LoadFont();
+            AssetManager.Instance.LoadFonts();
 
-            font = AssetManager.Instance.GetFont();
-
-            AssetManager.Instance.LoadTexture("text_background");
+            AssetManager.Instance.LoadTexture("tileset");
 
             Colony.Instance.Name = "New Colony";
 
@@ -218,6 +216,9 @@ namespace ProjectDwarf.Screens
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             this.gameTime = gameTime;
+
+            KeyboardState kb = Keyboard.GetState();
+
             HandleSelection(gameTime);
             HandleLevelScrolling(gameTime);
             HandleDwarfPanning(gameTime);
@@ -319,6 +320,9 @@ namespace ProjectDwarf.Screens
         void DrawUI()
         {
             spriteBatch.Begin();
+            Vector2 mousePosition = Mouse.GetState().Position.ToVector2()  / Constants.TileSize + cameraPosition;
+
+            UIText.Display($"{TileRegistry.Tiles[Parcel.Instance.GetTile(new Vector3(mousePosition.X, currentLevel, mousePosition.Y))].Name}", Color.White, new Vector2(), UIAnchor.DownLeft, true, false);
 
             UIText.Display($"Colony {Colony.Instance.Name} ({Colony.Instance.Members.Count} members)", Color.White, new Vector2(), UIAnchor.CenterUp); 
             UIText.Display($"{frameRate} fps", Color.Yellow, new Vector2(), UIAnchor.UpRight, true);
@@ -346,7 +350,8 @@ namespace ProjectDwarf.Screens
             DrawTiles();
             DrawUI();
 
-            frameRate = (int)(1 / gameTime.ElapsedGameTime.TotalSeconds);
+            if (gameTime != null)
+                frameRate = (int)(1 / gameTime.ElapsedGameTime.TotalSeconds);
         }
     }
 }

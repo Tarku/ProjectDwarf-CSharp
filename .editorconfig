@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# IDE0051: Supprimer les membres privés non utilisés
+dotnet_diagnostic.IDE0051.severity = none
+
+# CS0414: The field 'ColonyScreen.currentDesignationType' is assigned but its value is never used
+dotnet_diagnostic.CS0414.severity = silent

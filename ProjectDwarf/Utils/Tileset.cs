@@ -30,17 +30,18 @@ namespace ProjectDwarf
         public void Initialize()
         {
             AssetManager.Instance.LoadTexture("tileset");
+            AssetManager.Instance.LoadTexture("isometric_tileset");
 
-            TileSheet = AssetManager.Instance.GetTexture("tileset");
+            TileSheet = AssetManager.Instance.GetTexture("isometric_tileset");
         }
 
         public Rectangle GetTileRectangle(int index)
         {
-            int x = index % Constants.TilesetTileSize;
-            int y = index / Constants.TilesetTileSize;
+            int x = index % Constants.TilesetTileWidth;
+            int y = index / Constants.TilesetTileWidth;
             
 
-            return new Rectangle(x * Constants.TilesetTileSize, y * Constants.TilesetTileSize, Constants.TilesetTileSize, Constants.TilesetTileSize);
+            return new Rectangle(x * Constants.TilesetTileWidth, y * Constants.TilesetTileHeight, Constants.TilesetTileWidth, Constants.TilesetTileHeight);
         }
 
         public void UnloadContent()

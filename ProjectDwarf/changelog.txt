@@ -1,0 +1,14 @@
+﻿Version alpha 1.0.0
+
+ - Now has a main menu and a still empty options screen.
+ - Text with background shows properly (UI was revamped)
+
+
+Version alpha 1.1.0
+
+ - Now uses isometric view instead of top-down view.
+ - Dwarves are now able to dig designated areas.
+ - Dwarves are able to autonomously choose tasks and prioritise the closest ones to them.
+ - Current camera level is now shown in UI.
+ - Readded pathfinding in dwarves.
+ - Added changelog

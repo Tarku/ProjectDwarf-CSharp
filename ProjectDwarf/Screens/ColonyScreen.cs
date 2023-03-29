@@ -14,6 +14,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using ProjectDwarf.Tiles;
+using ProjectDwarf.Utils;
 
 namespace ProjectDwarf.Screens
 {
@@ -32,6 +33,9 @@ namespace ProjectDwarf.Screens
 
         int groundTileOffset = 0;
         int groundTileLevelOffset = -1;
+
+        Vector2 drawOffset = new Vector2(0, Constants.TileHeight / 3);
+        int layersDisplayedAtOnce = 4;
 
         int maxScreenZ;
         int maxScreenX;
@@ -54,7 +58,6 @@ namespace ProjectDwarf.Screens
         {
             AssetManager.Instance.LoadFonts();
 
-            AssetManager.Instance.LoadTexture("tileset");
 
             Colony.Instance.Name = "New Colony";
 
@@ -66,31 +69,61 @@ namespace ProjectDwarf.Screens
             Tileset.Instance.UnloadContent();
         }
 
+        Vector2 ScreenToMapPosition(Vector2 position)
+        {
+            Vector2 worldPosition = new Vector2();
+
+            position.X -= Constants.HalfScreen.X - (Constants.TileWidth / 2);
+
+            worldPosition.X = 0.5f * (position.X / (Constants.TileWidth / 2) + position.Y / (Constants.TileHeight / 3));
+            worldPosition.Y = 0.5f * (-position.X / (Constants.TileWidth / 2) + position.Y / (Constants.TileHeight / 3));
+
+            worldPosition += cameraPosition;
+
+            return worldPosition;
+        }
+
         void HandleSelection(GameTime gameTime)
         {
+
             if (Mouse.GetState().LeftButton == ButtonState.Pressed && !isSelectionActive)
             {
-                Vector2 mousePosition = Mouse.GetState().Position.ToVector2() / Constants.TileSize;
+                Vector2 mousePosition = Mouse.GetState().Position.ToVector2();
+                Vector2 worldMousePosition = ScreenToMapPosition(mousePosition);
 
-                mousePosition += cameraPosition;
-
-                mouseSelection.Location = new Vector2(mousePosition.X, mousePosition.Y).ToPoint();
+                mouseSelection.Location = new Point((int)Math.Floor(worldMousePosition.X), (int)Math.Floor(worldMousePosition.Y - 1));
 
                 isSelectionActive = true;
             }
 
             if (isSelectionActive)
             {
-                Vector2 mousePosition = Mouse.GetState().Position.ToVector2() / Constants.TileSize;
+                Vector2 mousePosition = Mouse.GetState().Position.ToVector2();
+                Vector2 worldMousePosition = ScreenToMapPosition(mousePosition);
 
-                mousePosition += cameraPosition;
-
-                mouseSelection.Size = new Point((int)mousePosition.X, (int)mousePosition.Y);
+                mouseSelection.Size = new Point((int)Math.Ceiling(worldMousePosition.X), (int)Math.Ceiling(worldMousePosition.Y)) - mouseSelection.Location;
 
                 if (Mouse.GetState().LeftButton == ButtonState.Released)
                 {
-                    Parcel.Instance.Fill(mouseSelection, currentLevel, 0);
+
                     isSelectionActive = false;
+
+                    if (currentDesignationType == DesignationTypes.Mine)
+                    {
+                        int totalTiles = 0;
+
+                        for (int z = mouseSelection.Location.Y; z < mouseSelection.Size.Y + mouseSelection.Location.Y; z++)
+                            for (int x = mouseSelection.Location.X; x < mouseSelection.Size.X + mouseSelection.Location.X; x++)
+                                if (TileRegistry.TileAt(new Vector3(x, currentLevel, z)) != TileRegistry.Tiles[0])
+                                {
+                                    TaskManager.Instance.AddTask(new Tasks.MiningTask(new Vector3(x, currentLevel, z)));
+                                    totalTiles++;
+                                }
+
+                        Console.WriteLine($"Mining task initiated ({totalTiles} selected)");
+
+                    }
+
                 }
             }
         }
@@ -103,11 +136,11 @@ namespace ProjectDwarf.Screens
             if (cameraPosition.Y < 0)
                 cameraPosition.Y = 0;
 
-            if (cameraPosition.X >= Constants.ParcelWidth - Constants.ScreenWidth / Constants.TileSize - 1)
-                cameraPosition.X = Constants.ParcelWidth - Constants.ScreenWidth / Constants.TileSize - 2;
+            if (cameraPosition.X >= Constants.ParcelWidth - Constants.ScreenWidth / Constants.TileWidth - 1)
+                cameraPosition.X = Constants.ParcelWidth - Constants.ScreenWidth / Constants.TileWidth - 2;
 
-            if (cameraPosition.Y >= Constants.ParcelWidth - Constants.ScreenHeight / Constants.TileSize - 1)
-                cameraPosition.Y = Constants.ParcelWidth - Constants.ScreenHeight / Constants.TileSize - 2;
+            if (cameraPosition.Y >= Constants.ParcelWidth - Constants.ScreenHeight / Constants.TileWidth - 1)
+                cameraPosition.Y = Constants.ParcelWidth - Constants.ScreenHeight / Constants.TileWidth - 2;
         }
 
         void HandleLevelScrolling(GameTime gameTime)
@@ -115,22 +148,22 @@ namespace ProjectDwarf.Screens
             KeyboardState keyboardState = Keyboard.GetState();
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (keyboardState.IsKeyDown(Keys.PageDown) && !isLevelScrollingButtonActive)
+            if (keyboardState.IsKeyDown(Keys.OemBackslash) && !keyboardState.IsKeyDown(Keys.LeftShift) && !isLevelScrollingButtonActive)
                 isLevelScrollingButtonActive = true;
 
-            if (keyboardState.IsKeyUp(Keys.PageDown) && isLevelScrollingButtonActive)
+            if (keyboardState.IsKeyUp(Keys.OemBackslash) && !keyboardState.IsKeyDown(Keys.LeftShift) && isLevelScrollingButtonActive)
             {
-                currentLevel--;
+                currentLevel++;
                 followDwarf = false;
                 isLevelScrollingButtonActive = false;
             }
 
-            if (keyboardState.IsKeyDown(Keys.PageUp) && !isLevelScrollingButtonActive)
+            if (keyboardState.IsKeyDown(Keys.OemBackslash) && keyboardState.IsKeyDown(Keys.LeftShift) && !isLevelScrollingButtonActive)
                 isLevelScrollingButtonActive = true;
 
-            if (keyboardState.IsKeyUp(Keys.PageUp) && isLevelScrollingButtonActive)
+            if (keyboardState.IsKeyUp(Keys.OemBackslash) && keyboardState.IsKeyDown(Keys.LeftShift) && isLevelScrollingButtonActive)
             {
-                currentLevel++;
+                currentLevel--;
                 followDwarf = false;
                 isLevelScrollingButtonActive = false;
             }
@@ -160,9 +193,8 @@ namespace ProjectDwarf.Screens
                 float dwarfPosX = Colony.Instance.Members[currentDwarfID].Position.X;
                 float dwarfPosZ = Colony.Instance.Members[currentDwarfID].Position.Z;
 
-                followDwarf = false;
 
-                cameraPosition = new Vector2(dwarfPosX, dwarfPosZ) - Constants.HalfScreen / Constants.TileSize ;
+                cameraPosition = new Vector2(dwarfPosX, dwarfPosZ) - Constants.HalfScreen / Constants.TileWidth ;
 
                 currentLevel = (byte) Colony.Instance.Members[currentDwarfID].Position.Y;
             }
@@ -181,33 +213,33 @@ namespace ProjectDwarf.Screens
             if (keyboardState.IsKeyDown(Keys.Up))
             {
                 cameraPosition += new Vector2(0, -1) * deltaTime * Constants.CameraSpeed;
-                KeepCameraInBounds();
+                //KeepCameraInBounds();
                 followDwarf = false;
             }
 
             if (keyboardState.IsKeyDown(Keys.Down))
             {
                 cameraPosition += new Vector2(0, 1) * deltaTime * Constants.CameraSpeed;
-                KeepCameraInBounds();
+                //KeepCameraInBounds();
                 followDwarf = false;
             }
 
             if (keyboardState.IsKeyDown(Keys.Left))
             {
                 cameraPosition += new Vector2(-1, 0) * deltaTime * Constants.CameraSpeed;
-                KeepCameraInBounds();
+                //KeepCameraInBounds();
                 followDwarf = false;
             }
 
             if (keyboardState.IsKeyDown(Keys.Right))
             {
                 cameraPosition += new Vector2(1, 0) * deltaTime * Constants.CameraSpeed;
-                KeepCameraInBounds();
+                //KeepCameraInBounds();
                 followDwarf = false;
             }
 
-            maxScreenZ = (int)(cameraPosition.Y / Constants.TileSize + Constants.ScreenHeight / Constants.TileSize) + 1;
-            maxScreenX = (int)(cameraPosition.X / Constants.TileSize + Constants.ScreenWidth / Constants.TileSize) + 1;
+            maxScreenZ = (int)(cameraPosition.Y + Constants.ScreenHeight / Constants.TileWidth);
+            maxScreenX = (int)(cameraPosition.X + Constants.ScreenWidth / Constants.TileWidth);
 
         }
 
@@ -218,6 +250,12 @@ namespace ProjectDwarf.Screens
             this.gameTime = gameTime;
 
             KeyboardState kb = Keyboard.GetState();
+
+            if (kb.IsKeyDown(Keys.M))
+            {
+                currentDesignationType = DesignationTypes.Mine;
+                Console.WriteLine("Mining task selected.");
+            }
 
             HandleSelection(gameTime);
             HandleLevelScrolling(gameTime);
@@ -231,7 +269,7 @@ namespace ProjectDwarf.Screens
                 float dwarfPosX = Colony.Instance.Members[currentDwarfID].Position.X;
                 float dwarfPosZ = Colony.Instance.Members[currentDwarfID].Position.Z;
 
-                Vector2 camPos = new Vector2(dwarfPosX, dwarfPosZ) - Constants.HalfScreen / Constants.TileSize;
+                Vector2 camPos = new Vector2(dwarfPosX, dwarfPosZ) - Constants.HalfScreen / Constants.TileWidth / 2;
 
                 cameraPosition = camPos;
 
@@ -290,44 +328,66 @@ namespace ProjectDwarf.Screens
 
         void DrawTiles()
         {
-            spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, SamplerState.PointClamp);
+            Vector2 screenPosition = new Vector2();
+            Vector2 mapPosition = new Vector2();
 
-            for (int screenZ = 0; screenZ <= maxScreenZ; screenZ++)
+            for (int i = layersDisplayedAtOnce - 3; i >= 0; i--)
             {
-                for (int screenX = 0; screenX <= maxScreenX; screenX++)
+                int minY = Constants.ScreenHeight / Constants.TileHeight;
+                int minX = Constants.ScreenWidth / Constants.TileWidth / 2;
+
+                int maxY = (int)(minY * 2.2f * 1.5f);
+                int maxX = (int)(minX * 2.2f);
+
+                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
+
+                for (int screenY = (int)(-minY * 1.2f * 1.5f - i); screenY < maxY + i; screenY++)
                 {
-                    worldX = screenX + (int) cameraPosition.X;
-                    worldZ = screenZ + (int) cameraPosition.Y;
-
-                    if (!Parcel.Instance.IsInParcelBounds(new Vector2(worldX, worldZ), currentLevel) || !Parcel.Instance.IsInParcelBounds(new Vector2(worldX, worldZ), currentLevel - 1))
-                        continue;
-
-                    groundTileOffset = Parcel.Instance.Tiles[worldX, currentLevel, worldZ] == 0 ? 16 : 0;
-                    groundTileLevelOffset = Parcel.Instance.Tiles[worldX, currentLevel, worldZ] == 0 ? -1 : 0;
-
-                    Tileset.Instance.DrawTile(spriteBatch, new Vector2(screenX, screenZ) * Constants.TileSize, Parcel.Instance.GetTileAndOffset(new Vector3(worldX, currentLevel + groundTileLevelOffset, worldZ), (byte) groundTileOffset));
-
-                    foreach (Dwarf dwarf in Colony.Instance.Members.Where(item => item.Position == new Vector3(worldX, currentLevel, worldZ)))
+                    for (int screenX = (int)(-minX * 1.2f - i); screenX < maxX + i; screenX++)
                     {
-                        Tileset.Instance.DrawTile(spriteBatch, new Vector2(screenX, screenZ) * Constants.TileSize, 16);
+                        mapPosition = cameraPosition + new Vector2(screenX, screenY);
+
+                        if (!Parcel.Instance.IsInParcelBounds(new Vector2(mapPosition.X, mapPosition.Y), currentLevel))
+                            continue;
+
+                        screenPosition.X = (screenX - screenY) * Constants.TileWidth / 2;
+                        screenPosition.Y = (screenX + screenY) * Constants.TileHeight / 3;
+
+                        screenPosition.X += Constants.HalfScreen.X - Constants.TileWidth / 2;
+
+                        foreach (Dwarf dwarf in Colony.Instance.Members)
+                        {
+                            if ((int) dwarf.Position.X == (int) mapPosition.X && (int) dwarf.Position.Y == currentLevel - i && (int) dwarf.Position.Z == (int) mapPosition.Y)
+                            {
+                                Tileset.Instance.DrawTile(spriteBatch, screenPosition + drawOffset * i, 16);
+
+                            }
+                        }
+
+                        Tileset.Instance.DrawTile(spriteBatch, screenPosition + drawOffset * i, TileRegistry.Tiles[Parcel.Instance.GetTile(new Vector3(mapPosition.X, currentLevel - i, mapPosition.Y))].TextureID);
                     }
                 }
+                spriteBatch.End();
             }
 
-            spriteBatch.End();
         }
 
         void DrawUI()
         {
             spriteBatch.Begin();
-            Vector2 mousePosition = Mouse.GetState().Position.ToVector2()  / Constants.TileSize + cameraPosition;
+            Vector2 mousePosition = ScreenToMapPosition(Mouse.GetState().Position.ToVector2());
 
             UIText.Display($"{TileRegistry.Tiles[Parcel.Instance.GetTile(new Vector3(mousePosition.X, currentLevel, mousePosition.Y))].Name}", Color.White, new Vector2(), UIAnchor.DownLeft, true, false);
 
             UIText.Display($"Colony {Colony.Instance.Name} ({Colony.Instance.Members.Count} members)", Color.White, new Vector2(), UIAnchor.CenterUp); 
             UIText.Display($"{frameRate} fps", Color.Yellow, new Vector2(), UIAnchor.UpRight, true);
+            
+            if (currentLevel - Constants.SurfaceLevel >= 0)
+                UIText.Display($"Altitude: {currentLevel - Constants.SurfaceLevel}", Color.Lime, new Vector2(), UIAnchor.DownRight, true);
+            else
+                UIText.Display($"Depth: {currentLevel - Constants.SurfaceLevel}", Color.OrangeRed, new Vector2(), UIAnchor.DownRight, true);
 
-            UIText.Display($"{currentLevel - Constants.SurfaceLevel}", Color.Lime, new Vector2(), UIAnchor.DownRight, true);
+            UIText.Display($"Designations:\n - Mine (m)", Color.White, new Vector2(), UIAnchor.CenterLeft, true);
 
             if (followDwarf)
             {

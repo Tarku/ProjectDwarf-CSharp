@@ -9,7 +9,7 @@ namespace ProjectDwarf
 {
     public static class Constants
     {
-        public static string Version = "alpha 1.0.0";
+        public static string Version = "alpha 1.1.0";
 
         public static int ScreenWidth = 1440;
         public static int ScreenHeight = 720;
@@ -27,12 +27,16 @@ namespace ProjectDwarf
 
         public static readonly byte SurfaceLevel = (byte) (0.5 * ParcelDepth);
 
-        public static readonly float CameraSpeed = 20f;
+        public static readonly float CameraSpeed = 30f;
         public static float ScalingFactor = 1.75f;
 
-        public static readonly int TilesetTileSize = 16;
+        public static readonly int TilesetTileWidth = 16;
+        public static readonly int TilesetTileHeight = 24;
         public static readonly int PopulationCap = 200;
 
-        public static readonly int TileSize = (int) (TilesetTileSize * ScalingFactor);
+        public static readonly int TileWidth = (int) (TilesetTileWidth * ScalingFactor);
+        public static readonly int TileHeight = (int)(TilesetTileHeight * ScalingFactor);
+
+        public static readonly Vector2 TileSize = new(TileWidth, TileHeight);
     }
 }

@@ -202,26 +202,7 @@ namespace ProjectDwarf
             int randY = RNG.Int(radius, Constants.SurfaceLevel - radius);
             int randZ = RNG.Int(radius, Constants.ParcelWidth - radius);
 
-            Vector3 blobCenter = new Vector3(randX, randY, randZ);
-
-            for (int y = randY - radius; y < randY + radius; y++)
-            {
-                for (int z = randZ - radius; z < randZ + radius; z++)
-                {
-                    for (int x = randX - radius; x < randX + radius; x++)
-                    {
-                        Vector3 pos = new(x, y, z);
-
-                        if (Distance.Get3D(blobCenter, pos) <= radius)
-                        {
-                            if (IsInParcelBounds(pos))
-                            {
-                                SetTile(pos, 6);
-                            }
-                        }
-                    }
-                }
-            }
+            SpawnBlob(new Vector3(randX, randY, randZ), 5, radius);
         }
         void SpawnBlob(Vector3 position, byte tile, int radius)
         {
@@ -411,7 +392,7 @@ namespace ProjectDwarf
 
         public bool IsInParcelBounds(Vector3 position)
         {
-            return (position.X >= 0 && position.Y >= 0 && position.Z >= 0 && position.X < Constants.ParcelWidth - 1 && position.Y < Constants.ParcelDepth - 1 && position.X < Constants.ParcelWidth - 1); 
+            return (position.X >= 0 && position.Y >= 0 && position.Z >= 0 && position.X < Constants.ParcelWidth - 1 && position.Y < Constants.ParcelDepth - 1 && position.Z < Constants.ParcelWidth - 1); 
         }
 
         public bool IsInParcelBounds(Vector2 position, int height)

@@ -30,7 +30,7 @@ namespace ProjectDwarf
         {
             Members = new List<Dwarf>(Constants.PopulationCap);
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 20; i++)
                 Members.Add(new Dwarf($"Dumbass {i + 1}", RNG.Int(20, 50)));
         }
 

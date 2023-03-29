@@ -3,8 +3,8 @@
     public enum DesignationTypes
     {
         None,
-        Chop,
         Mine,
+        Chop,
         Dig,
         Harvest
     }
